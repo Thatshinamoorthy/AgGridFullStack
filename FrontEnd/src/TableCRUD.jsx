@@ -16,10 +16,29 @@ const TableCRUD = () => {
   const handleEdit = (data) => {
     setEdit(true);
     setModalOpen(true);
-    console.log(data);
     form.setFieldsValue(data);
   };
-  const handleEditUser = () => {};
+  const handleEditUser = () => {
+    try {
+      form.validateFields().then((values) => {
+        const finalData = {
+          ...values,
+          id: Number(values?.id),
+          std: Number(values?.std),
+          age: Number(values?.age),
+        };
+        socket.emit("edit-user", finalData, (res) => {
+          console.log(res);
+          if (res?.success) {
+            setEdit(false);
+            handleModalCancel();
+          }
+        });
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const colDef = [
     { field: "id", headerName: "ID", flex: 1 },
     { field: "name", headerName: "Name", flex: 1 },
@@ -29,6 +48,7 @@ const TableCRUD = () => {
     { field: "school_name", headerName: "School Name", flex: 1 },
     {
       headerName: "Actions",
+      flex: 1,
       cellRenderer: (params) => {
         return (
           <div className="flex gap-2 items-center">
@@ -81,9 +101,7 @@ const TableCRUD = () => {
             std: Number(values?.std),
             age: Number(values?.age),
           };
-          console.log(finalData);
           socket.emit("add-user", finalData, (res) => {
-            console.log(res);
             if (res?.success) {
               handleModalCancel();
             }
@@ -98,8 +116,6 @@ const TableCRUD = () => {
   };
   useEffect(() => {
     socket.on("user-added", (res) => {
-      console.log(res);
-
       if (res?.success) {
         if (gridRef?.current) {
           const addData = {
@@ -112,6 +128,26 @@ const TableCRUD = () => {
           };
           gridRef.current.applyServerSideTransaction({
             add: [addData],
+          });
+        }
+        handleModalCancel();
+      }
+    });
+  }, []);
+  useEffect(() => {
+    socket.on("user-updated", (res) => {
+      if (res?.success) {
+        if (gridRef?.current) {
+          const updateData = {
+            id: String(res?.data?.id),
+            name: res?.data?.name,
+            age: String(res?.data?.age),
+            gender: res?.data?.gender,
+            std: String(res?.data?.std),
+            school_name: res?.data?.school_name,
+          };
+          gridRef.current.applyServerSideTransaction({
+            update: [updateData],
           });
         }
         handleModalCancel();
@@ -142,7 +178,7 @@ const TableCRUD = () => {
             rules={[{ required: true, message: "Please Enter your ID!" }]}
             style={{ marginBottom: "9px" }}
           >
-            <Input type="number" />
+            <Input type="number" disabled={isEdit} />
           </Form.Item>
           <Form.Item
             label="Name"

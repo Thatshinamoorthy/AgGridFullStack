@@ -33,7 +33,10 @@ usersSocket.on("connection", (socket) => {
   });
   socket.on("add-user", async (data, callback) => {
     try {
-      const { id } = data;
+      const { id, name, age, std, gender, school_name } = data;
+      if (!id || !name || !age || !std || !gender || !school_name) {
+        return callback({ success: false, error: "Please fill all fields" });
+      }
       const existUser = await users.findOne({ id });
       if (existUser) {
         callback({ success: false, error: "User already exist" });
@@ -67,16 +70,16 @@ usersSocket.on("connection", (socket) => {
         return;
       }
       if (existUser) {
-        const user = await users.updateOne({ id }, { $set: data });
+        await users.updateOne({ id }, { $set: data });
         callback({
           success: true,
           message: "User Updated Successfully!",
-          data: user,
+          data: data,
         });
         usersSocket.emit("user-updated", {
           success: true,
           message: "User Updated Successfully!",
-          data: user,
+          data: data,
         });
       }
     } catch (error) {
