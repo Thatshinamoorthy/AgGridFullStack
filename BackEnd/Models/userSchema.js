@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
     enum: ["Male", "Female", "Other"],
     required: true
   },
-  scl_name: {
+  school_name: {
     type: String,
     required: true,
     trim: true
